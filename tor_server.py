@@ -107,7 +107,7 @@ class tor_server(object):
             if addr not in self.server_connection_list:
                 self.server_connection_list.append(addr)
                 print "tor_servers:", self.server_connection_list
-                self.for_servers_socket.sendto("ACK", addr)
+            self.for_servers_socket.sendto("ACK", addr)
         elif data == "ACK":
             if addr not in self.server_connection_list:
                 self.server_connection_list.append(addr)
