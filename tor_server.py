@@ -102,7 +102,9 @@ class tor_server(object):
     def handle_SYN_ACK(self, data, addr):
         if data == "SYN":
             if addr != self.server_address:
+                print "here"
                 self.for_servers_socket.sendto("SYN / ACK", addr)
+                self.server_connection_list.append(addr)
         elif data == "SYN / ACK":
             if addr not in self.server_connection_list:
                 self.server_connection_list.append(addr)
@@ -176,6 +178,8 @@ class tor_server(object):
                     server_data, server_addr = self.for_servers_socket.recvfrom(self.BUFFER)
                     print server_data
                     if "SYN" in server_data or "ACK" in server_data:
+                        if read_socket not in self.read_sockets:
+                            self.read_sockets.append(read_socket)
                         self.handle_SYN_ACK(server_data, server_addr)
                     elif server_data == "EXIT":
                         self.handle_EXIT(server_addr)
