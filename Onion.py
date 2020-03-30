@@ -11,11 +11,15 @@ class Onion(object):
             self.data.remove(destination)
             return self.data
         else:
+            print "return none"
             return None
 
     def get_layer_destination_address(self):
-        destination = self.data[0]
-        return destination
+        if len(self.data) >= 1:
+            destination = self.data[0]
+            return destination
+        else:
+            return None
 
     def add_layer(self, destination):
         if self.layer_count < 3:
@@ -37,6 +41,7 @@ class Onion(object):
         return self.data
 
     def build_reverse_onion(self, running_list):
+        running_list.reverse()
         for server in running_list:
             self.add_layer(server)
         return self.data

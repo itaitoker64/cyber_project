@@ -59,20 +59,13 @@ class Proxy(object):
         except socket.error:
             print "here"
 
-    def get_random_list(self):
-        list = self.running_servers_list[:]
-        return_list = []
-        for i in range(0,3):
-            item = random.choice(list)
-            list.remove(item)
-            return_list.append(item)
-        return return_list
-
-
-    def build_packet_route(self):
-        running_list = self.running_servers_list
+    def build_packet_route(self,last_addr):
+        running_list = self.running_servers_list[:]
         if len(running_list) >= self.min_onion_layers:
-            list = self.get_random_list()
+            list = [running_list[0]]
+            running_list.remove(last_addr)
+            list.append(random.choice(running_list[1:]))
+            list.append(last_addr)
 
             # build onion
             onion = Onion()
@@ -80,28 +73,18 @@ class Proxy(object):
             print "onion:", onion.get_data()
 
             # build reverse onion for coming back
-            last_addr = (self.IP, 2000)
-            if last_addr in list:
-                list.remove(last_addr)
-                list.append(last_addr)
-            else:
-                del list[-1]
-                list.append(last_addr)
             reverse_onion = Onion()
             reverse_onion.build_reverse_onion(list)
             print "reverse_onion:", reverse_onion.get_data()
 
-            first_addr = onion.get_layer_destination_address()
-            self.send_msg("hi man", first_addr,onion, reverse_onion)
+            self.send_msg("hi man",onion, reverse_onion)
 
-    def send_msg(self, msg, addr, onion, reverse_onion):
+    def send_msg(self, msg, onion, reverse_onion):
         byte_onion = pickle.dumps(onion)
         byte_reverse_onion = pickle.dumps(reverse_onion)
 
         data = "TO_FORWARD:" + "MSG:" + msg + "ONION:" + byte_onion + "REVERSE_ONION:" + byte_reverse_onion
-        temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        temp_socket.connect(addr)
-        temp_socket.send(data)
+        self.socket.send(data)
 
     def run_proxy(self):
         while True:
@@ -118,9 +101,13 @@ class Proxy(object):
                   "3 - encrypt route \n" \
                   "4 - send packet"
             info = raw_input()
-
+            if info == '1':
+                print self.running_servers_list
             if info == '2':
-                self.build_packet_route()
+                print "pick where to send"
+                print self.running_servers_list[1:]
+                ans = raw_input()
+                self.build_packet_route(self.running_servers_list[int(ans)])
 
 
 

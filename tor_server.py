@@ -150,10 +150,20 @@ class tor_server(object):
         msg = data[msg_start:msg_end]
         return msg
 
+    def send_to_client(self,data):
+        msg = self.get_msg(data)
+        self.for_clients_socket.send(msg)
+        print "sent to client"
+
+
     def forward_msg(self, data):
         onion = self.get_onion(data)
 
         destination = onion.get_layer_destination_address()
+        if destination is None:
+            self.send_to_client(data)
+            return
+
         onion = onion.peel_layer()
 
         reverse_onion = self.get_reverse_onion(data)
@@ -192,7 +202,6 @@ class tor_server(object):
             else:  # client_socket
                 try:
                     data = read_socket.recv(self.BUFFER)
-                    print data
                     if data == 'GIVE_LIVE_SERVERS':
                         msg = "LIVE_SERVERS:", self.server_connection_list
                         read_socket.send(str(msg))
