@@ -55,7 +55,7 @@ class tor_server(object):
         # bind the socket to the address
         self.for_clients_socket.bind(self.client_address)
 
-        self.for_clients_socket.listen(1)
+        self.for_clients_socket.listen(5)
 
         # end client config --------------------------------------------------------------------------------------------
         # -----------------------------------------------------
@@ -99,10 +99,9 @@ class tor_server(object):
             print "tor_servers:", self.server_connection_list
 
     # handle the handshake
-    def handle_SYN_ACK(self, data, addr):
+    def  handle_SYN_ACK(self, data, addr):
         if data == "SYN":
             if addr != self.server_address:
-                print "here"
                 self.for_servers_socket.sendto("SYN / ACK", addr)
                 self.server_connection_list.append(addr)
                 print "tor_servers:", self.server_connection_list
@@ -177,10 +176,7 @@ class tor_server(object):
             if read_socket == self.for_servers_socket:
                 try:
                     server_data, server_addr = self.for_servers_socket.recvfrom(self.BUFFER)
-                    print server_data
                     if "SYN" in server_data or "ACK" in server_data:
-                        if read_socket not in self.read_sockets:
-                            self.read_sockets.append(read_socket)
                         self.handle_SYN_ACK(server_data, server_addr)
                     elif server_data == "EXIT":
                         self.handle_EXIT(server_addr)

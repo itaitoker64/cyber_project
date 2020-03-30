@@ -37,7 +37,6 @@ class Onion(object):
         return self.data
 
     def build_reverse_onion(self, running_list):
-        running_list.reverse()
         for server in running_list:
             self.add_layer(server)
         return self.data

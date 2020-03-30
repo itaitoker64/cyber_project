@@ -1,3 +1,4 @@
+import random
 import select
 import socket
 import ast
@@ -6,7 +7,7 @@ import pickle
 
 
 class Proxy(object):
-    min_onion_layers = 2
+    min_onion_layers = 3
 
     def __init__(self):
 
@@ -41,8 +42,6 @@ class Proxy(object):
         self.socket.send('GIVE_LIVE_SERVERS')
         self.running_servers_list = self.receive_data()
 
-        print self.running_servers_list
-
     def receive_data(self):
         try:
             data = self.socket.recv(1024)
@@ -60,27 +59,49 @@ class Proxy(object):
         except socket.error:
             print "here"
 
+    def get_random_list(self):
+        list = self.running_servers_list[:]
+        return_list = []
+        for i in range(0,3):
+            item = random.choice(list)
+            list.remove(item)
+            return_list.append(item)
+        return return_list
+
+
     def build_packet_route(self):
         running_list = self.running_servers_list
         if len(running_list) >= self.min_onion_layers:
-            list = running_list[-self.min_onion_layers:]
+            list = self.get_random_list()
 
             # build onion
             onion = Onion()
             onion.build_onion(list)
+            print "onion:", onion.get_data()
 
             # build reverse onion for coming back
+            last_addr = (self.IP, 2000)
+            if last_addr in list:
+                list.remove(last_addr)
+                list.append(last_addr)
+            else:
+                del list[-1]
+                list.append(last_addr)
             reverse_onion = Onion()
-            reverse_onion.build_onion(list)
+            reverse_onion.build_reverse_onion(list)
+            print "reverse_onion:", reverse_onion.get_data()
 
-            self.send_msg("hi man", onion, reverse_onion)
+            first_addr = onion.get_layer_destination_address()
+            self.send_msg("hi man", first_addr,onion, reverse_onion)
 
-    def send_msg(self, msg, onion, reverse_onion):
+    def send_msg(self, msg, addr, onion, reverse_onion):
         byte_onion = pickle.dumps(onion)
         byte_reverse_onion = pickle.dumps(reverse_onion)
 
         data = "TO_FORWARD:" + "MSG:" + msg + "ONION:" + byte_onion + "REVERSE_ONION:" + byte_reverse_onion
-        self.socket.send(data)
+        temp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        temp_socket.connect(addr)
+        temp_socket.send(data)
 
     def run_proxy(self):
         while True:
