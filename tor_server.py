@@ -103,7 +103,8 @@ class tor_server(object):
         if data == "SYN":
             if addr != self.server_address:
                 self.for_servers_socket.sendto("SYN / ACK", addr)
-                self.server_connection_list.append(addr)
+                if addr not in self.server_connection_list:
+                    self.server_connection_list.append(addr)
                 print "tor_servers:", self.server_connection_list
         elif data == "SYN / ACK":
             if addr not in self.server_connection_list:
@@ -175,7 +176,6 @@ class tor_server(object):
         msg = self.get_msg(data)
 
         data = "TO_FORWARD:" + "MSG:" + msg + "ONION:" + byte_onion + "REVERSE_ONION:" + byte_reverse_onion
-        print "here!!!" ,destination
 
         self.for_servers_socket.sendto(data, destination)
 
@@ -197,7 +197,8 @@ class tor_server(object):
                     sys.exit(0)
             elif read_socket == self.for_clients_socket:
                 client_socket, client_address = self.for_clients_socket.accept()
-                self.read_sockets.append(client_socket)
+                if client_socket not in self.read_sockets:
+                    self.read_sockets.append(client_socket)
                 print "client connected from:", client_address
             else:  # client_socket
                 try:

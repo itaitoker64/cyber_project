@@ -1,1 +1,1 @@
-py -2 tor_server.py
+python tor_server.py

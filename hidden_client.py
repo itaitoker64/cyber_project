@@ -108,6 +108,8 @@ class Proxy(object):
                 print self.running_servers_list[1:]
                 ans = raw_input()
                 self.build_packet_route(self.running_servers_list[int(ans)])
+            if info == '3':
+                pass
 
 
 
