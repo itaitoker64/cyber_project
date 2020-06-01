@@ -7,7 +7,8 @@ import logging
 import errno
 from Onion import Onion
 import pickle
-
+from Crypto.PublicKey import RSA
+from Crypto import Random
 logging.getLogger().setLevel(logging.INFO)
 
 
@@ -18,6 +19,14 @@ logging.getLogger().setLevel(logging.INFO)
 
 class tor_server(object):
     def __init__(self):
+        random_generator = Random.new().read
+
+        # generate private key
+        self.private_key = RSA.generate(1024, random_generator)
+
+        # generate public key
+        self.public_key = self.private_key.publickey()
+
         # get server ip address
         self.IP = self.get_IP()
 
@@ -85,7 +94,7 @@ class tor_server(object):
 
     # at start broadcast to all that im here
     def connection_birth(self):
-        msg = "SYN"
+        msg = "SYN," + self.public_key.exportKey()
         self.send_broadcast(msg)
         if self.server_address not in self.server_connection_list:
             self.server_connection_list.append(self.server_address)
@@ -98,9 +107,35 @@ class tor_server(object):
             self.server_connection_list.remove(addr)
             print "tor_servers:", self.server_connection_list
 
+    # separate server public key from SYN
+    def separate_key_SYN(self, data):
+        return data[3:]
+
+    # separate server public key from SYN
+    def separate_key_SYN_ACK(self, data):
+        return data[9:]
+
     # handle the handshake
     def  handle_SYN_ACK(self, data, addr):
-        if data == "SYN":
+        if "SYN," in data:
+            public_key = self.separate_key_SYN(data)
+            if addr != self.server_address:
+                self.for_servers_socket.sendto("SYN / ACK," + self.public_key.exportKey(), addr)
+                if addr not in self.server_connection_list:
+                    self.server_connection_list.append((addr, public_key))
+                print "tor_servers:", self.server_connection_list
+        elif "SYN / ACK," in data:
+            public_key = self.separate_key_SYN_ACK(data)
+            if addr not in self.server_connection_list:
+                self.server_connection_list.append((addr, public_key))
+                print "tor_servers:", self.server_connection_list
+            self.for_servers_socket.sendto("ACK," + self.public_key.exportKey(), addr)
+        elif "ACK," in data:
+            public_key = self.separate_key_SYN(data)
+            if addr not in self.server_connection_list:
+                self.server_connection_list.append((addr, public_key))
+                print "tor_servers:", self.server_connection_list
+        elif data == "SYN":
             if addr != self.server_address:
                 self.for_servers_socket.sendto("SYN / ACK", addr)
                 if addr not in self.server_connection_list:
