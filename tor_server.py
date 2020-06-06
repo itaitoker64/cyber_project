@@ -162,14 +162,18 @@ class tor_server(object):
     def forward_msg(self, data):
         onion = self.get_onion(data)
         if type(onion) is type([]):
-            destination=onion[0]
-            onion = []
+            if len(onion)>1:
+                destination=onion[0]
+                onion = []
+            else:
+                destination = None
+
         else:
             destination = onion.get_layer_destination_address()
             logging.info("next destination is: " +str(destination))
             onion = onion.peel_layer()
             logging.info("now onion is: " + str(onion))
-        if destination is []:
+        if destination is None:
             self.send_to_client(data)
             return
 
