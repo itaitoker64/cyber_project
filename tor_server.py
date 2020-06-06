@@ -194,6 +194,8 @@ class tor_server(object):
                         self.handle_SYN_ACK(server_data, server_addr)
                     elif server_data == "EXIT":
                         self.handle_EXIT(server_addr)
+                    elif "TO_FORWARD" in server_data:
+                        self.forward_msg(data)
                     else:
                         pass
                 except socket.error:
