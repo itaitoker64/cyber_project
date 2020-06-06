@@ -162,13 +162,13 @@ class tor_server(object):
         onion = self.get_onion(data)
 
         destination = onion.get_layer_destination_address()
-        logging.info("next destination is: " +destination)
+        logging.info("next destination is: " +str(destination))
         if destination is None:
             self.send_to_client(data)
             return
 
         onion = onion.peel_layer()
-        logging.info("now onion is: " + onion)
+        logging.info("now onion is: " + str(onion))
 
         reverse_onion = self.get_reverse_onion(data)
 
@@ -180,6 +180,7 @@ class tor_server(object):
 
         data = "TO_FORWARD:" + "MSG:" + msg + "ONION:" + byte_onion + "REVERSE_ONION:" + byte_reverse_onion
 
+        logging.info("data is:" + data)
         self.for_servers_socket.sendto(data, destination)
 
     def recv_data(self):

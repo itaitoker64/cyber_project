@@ -69,7 +69,7 @@ class Proxy(object):
 
             # build onion
             onion = Onion()
-            onion.build_onion(list)
+            onion.build_onion(list[1:])
             print "onion:", onion.get_data()
 
             # build reverse onion for coming back

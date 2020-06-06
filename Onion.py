@@ -21,7 +21,15 @@ class Onion(object):
         else:
             return None
 
-    def add_layer(self, destination):
+    def add_layer1(self, destination):
+        if self.layer_count < 2:
+            self.data.append(destination)
+            self.layer_count += 1
+            return self.data
+        else:
+            return None
+
+    def add_layer2(self, destination):
         if self.layer_count < 3:
             self.data.append(destination)
             self.layer_count += 1
@@ -37,11 +45,11 @@ class Onion(object):
 
     def build_onion(self, running_list):
         for server in running_list:
-            self.add_layer(server)
+            self.add_layer1(server)
         return self.data
 
     def build_reverse_onion(self, running_list):
         running_list.reverse()
         for server in running_list:
-            self.add_layer(server)
+            self.add_layer2(server)
         return self.data
