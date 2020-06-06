@@ -137,6 +137,7 @@ class tor_server(object):
         byte_onion_end = data.find("REVERSE_ONION")
         byte_onion = data[byte_onion_start:byte_onion_end]
         onion = pickle.loads(byte_onion)
+        print "onion is: " + str(onion) + " type is: " + str(type(onion))
         return onion
 
     def get_reverse_onion(self, data):
@@ -160,15 +161,19 @@ class tor_server(object):
 
     def forward_msg(self, data):
         onion = self.get_onion(data)
-
-        destination = onion.get_layer_destination_address()
-        logging.info("next destination is: " +str(destination))
-        if destination is None:
+        if type(onion) is type([]):
+            destination=onion[0]
+            onion = []
+        else:
+            destination = onion.get_layer_destination_address()
+            logging.info("next destination is: " +str(destination))
+            onion = onion.peel_layer()
+            logging.info("now onion is: " + str(onion))
+        if destination is []:
             self.send_to_client(data)
             return
 
-        onion = onion.peel_layer()
-        logging.info("now onion is: " + str(onion))
+
 
         reverse_onion = self.get_reverse_onion(data)
 
@@ -195,7 +200,7 @@ class tor_server(object):
                     elif server_data == "EXIT":
                         self.handle_EXIT(server_addr)
                     elif "TO_FORWARD" in server_data:
-                        self.forward_msg(data)
+                        self.forward_msg(server_data)
                     else:
                         pass
                 except socket.error:
