@@ -1,4 +1,4 @@
-# hello this is a test
+
 class Onion(object):
     def __init__(self):
         self.layer_count = 0
@@ -45,4 +45,3 @@ class Onion(object):
         for server in running_list:
             self.add_layer(server)
         return self.data
-
