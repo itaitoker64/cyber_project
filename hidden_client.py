@@ -59,7 +59,7 @@ class Proxy(object):
         except socket.error:
             print "here"
 
-    def build_packet_route(self,last_addr):
+    def build_packet_route(self, last_addr):
         running_list = self.running_servers_list[:]
         if len(running_list) >= self.min_onion_layers:
             list = [running_list[0]]
@@ -77,7 +77,7 @@ class Proxy(object):
             reverse_onion.build_reverse_onion(list)
             print "reverse_onion:", reverse_onion.get_data()
 
-            self.send_msg("hi man",onion, reverse_onion)
+            self.send_msg("hi man", onion, reverse_onion)
 
     def send_msg(self, msg, onion, reverse_onion):
         byte_onion = pickle.dumps(onion)
@@ -92,14 +92,12 @@ class Proxy(object):
             rlist, wlist, xlist = select.select([self.socket], [self.socket], [self.socket])
             for read_socket in rlist:
                 try:
-                    msg = self.socket.recv(1024)
+                    msg = read_socket.recv(1024)
                     print msg
                 except socket.error:
                     pass
             print "1 - get running tor server list \n" \
-                  "2 - build a route to send packet \n" \
-                  "3 - encrypt route \n" \
-                  "4 - send packet"
+                  "2 - build a route to send packet \n"
             info = raw_input()
             if info == '1':
                 print self.running_servers_list
@@ -108,10 +106,6 @@ class Proxy(object):
                 print self.running_servers_list[1:]
                 ans = raw_input()
                 self.build_packet_route(self.running_servers_list[int(ans)])
-            if info == '3':
-                pass
-
-
 
 
 if __name__ == '__main__':

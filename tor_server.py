@@ -99,7 +99,7 @@ class tor_server(object):
             print "tor_servers:", self.server_connection_list
 
     # handle the handshake
-    def  handle_SYN_ACK(self, data, addr):
+    def handle_SYN_ACK(self, data, addr):
         if data == "SYN":
             if addr != self.server_address:
                 self.for_servers_socket.sendto("SYN / ACK", addr)
@@ -151,21 +151,24 @@ class tor_server(object):
         msg = data[msg_start:msg_end]
         return msg
 
-    def send_to_client(self,data):
+    def send_to_client(self, data):
+        logging.info("sending to client")
         msg = self.get_msg(data)
+        logging.info("msg: " + msg)
         self.for_clients_socket.send(msg)
         print "sent to client"
-
 
     def forward_msg(self, data):
         onion = self.get_onion(data)
 
         destination = onion.get_layer_destination_address()
+        logging.info("next destination is: " +destination)
         if destination is None:
             self.send_to_client(data)
             return
 
         onion = onion.peel_layer()
+        logging.info("now onion is: " + onion)
 
         reverse_onion = self.get_reverse_onion(data)
 
@@ -179,13 +182,13 @@ class tor_server(object):
 
         self.for_servers_socket.sendto(data, destination)
 
-
     def recv_data(self):
         rlist, wlist, xlist = select.select(self.read_sockets, self.write_sockets, self.error_sockets)
         for read_socket in rlist:
             if read_socket == self.for_servers_socket:
                 try:
                     server_data, server_addr = self.for_servers_socket.recvfrom(self.BUFFER)
+                    logging.info("msg is: " + server_data + ", sender is a tor_server from " + str(server_addr))
                     if "SYN" in server_data or "ACK" in server_data:
                         self.handle_SYN_ACK(server_data, server_addr)
                     elif server_data == "EXIT":
@@ -197,12 +200,14 @@ class tor_server(object):
                     sys.exit(0)
             elif read_socket == self.for_clients_socket:
                 client_socket, client_address = self.for_clients_socket.accept()
+                logging.info("new client from: " + str(client_address) + ", socket is: " + str(client_socket))
                 if client_socket not in self.read_sockets:
                     self.read_sockets.append(client_socket)
                 print "client connected from:", client_address
             else:  # client_socket
                 try:
                     data = read_socket.recv(self.BUFFER)
+                    logging.info("msg is: " + data + ", sender is a hidden_client")
                     if data == 'GIVE_LIVE_SERVERS':
                         msg = "LIVE_SERVERS:", self.server_connection_list
                         read_socket.send(str(msg))
